@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Модульний контроль | Веб-програмування</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#111a2e; --text:#e7efff; --muted:#9fb0d0; --accent:#38bdf8;
+    --ok:#22c55e; --bad:#ef4444; --line:rgba(255,255,255,.12); --warn:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(120deg,#050814,#0b1220);color:var(--text)}
+  .container{max-width:980px;margin:0 auto;padding:22px 14px 60px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{font-weight:900;letter-spacing:.2px}
+  .pill{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line);padding:10px 12px;border-radius:999px}
+  .timer{font-variant-numeric:tabular-nums;font-weight:900;color:var(--accent)}
+  .danger{color:var(--bad)!important}
+  .card{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 14px 36px rgba(0,0,0,.25)}
+  h1,h2{margin:.2rem 0 .6rem}
+  p{margin:.3rem 0;color:var(--muted);line-height:1.45}
+  .grid{display:grid;gap:14px}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{border:0;border-radius:14px;padding:12px 14px;background:var(--accent);color:#051020;font-weight:900;cursor:pointer}
+  button.secondary{background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--line)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .hide{display:none!important}
+
+  .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .kpi .mini{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted)}
+  .kpi b{color:var(--text)}
+  .progress{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--line)}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,rgba(56,189,248,.95),rgba(34,197,94,.95))}
+
+  .qcard{padding:16px;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10)}
+  .qwrap{scroll-margin-top:100px}
+  .qwrap.missed{border-color:rgba(245,158,11,.85)!important;box-shadow:0 0 0 2px rgba(245,158,11,.25) inset}
+  .qhead{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+  .qnum{min-width:42px;height:42px;border-radius:12px;background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.35);display:flex;align-items:center;justify-content:center;font-weight:900}
+  .qtitle{margin:0;font-weight:900}
+  .opts{margin-top:10px;display:grid;gap:8px}
+  label.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);cursor:pointer;transition:.15s}
+  label.opt:hover{border-color:rgba(56,189,248,.45)}
+  input[type="radio"]{margin-top:2px}
+  .feedback{margin-top:10px;font-weight:900;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .ok{color:var(--ok)}
+  .bad{color:var(--bad)}
+  .small{font-size:13px;color:var(--muted);font-weight:600}
+
+  .unans{
+    margin-top:12px;
+    border-radius:16px;
+    border:1px dashed rgba(245,158,11,.55);
+    background:rgba(245,158,11,.10);
+    padding:12px;
+  }
+  .unans h3{margin:0 0 8px;font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.18);
+    color:var(--text);
+    padding:6px 10px;
+    border-radius:999px;
+    font-weight:800;
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip:hover{border-color:rgba(245,158,11,.85)}
+  .qmeta{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.badge{
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:900;
+  font-size:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.25);
+  color:var(--text);
+}
+.badge.locked{
+  border-color:rgba(56,189,248,.55);
+  background:rgba(56,189,248,.16);
+}
+
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <header>
+    <div class="brand">Модульний контроль • Веб-програмування</div>
+    <div class="pill">
+      <span class="small">Час:</span> <span id="timer" class="timer">40:00</span>
+      <span class="small">• Відповіли:</span> <span id="answered" class="timer">0/60</span>
+      <span class="small">• Правильні:</span> <span id="correctNow" class="timer">0</span>
+    </div>
+  </header>
+
+  <!-- START -->
+  <section id="start" class="grid" style="margin-top:16px">
+    <div class="card">
+      <h1>Розпочати модуль</h1>
+      <p>60 питань · 40 хв. Порядок питань однаковий для всіх студентів.</p>
+      <div class="btnrow">
+        <button id="startBtn">Почати тест</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="grid hide" style="margin-top:16px">
+    <div class="card">
+      <h2 style="margin:0">Тест</h2>
+      <div class="kpi">
+        <div class="mini"><b>Питань:</b> 60</div>
+        <div class="mini"><b>Час:</b> 40 хв</div>
+        <div class="mini"><b>Правильні зараз:</b> <span id="kpiCorrect">0</span></div>
+      </div>
+
+      <div style="margin-top:12px" class="progress"><div id="bar" class="bar"></div></div>
+      <p class="small" id="needAll" style="margin-top:8px">Щоб завершити — дай відповіді на всі 60 запитань.</p>
+
+      <div id="unansweredPanel" class="unans hide">
+        <h3>Не відповіли на питання:</h3>
+        <div id="chips" class="chips"></div>
+        <p class="small" style="margin-top:8px">Натисни номер — перейдеш до питання.</p>
+      </div>
+
+      <div class="btnrow">
+        <button id="finishBtn" disabled>Завершити тест</button>
+        <button class="secondary" id="toTopBtn">До початку</button>
+      </div>
+    </div>
+
+    <div id="questions" class="grid"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="grid hide" style="margin-top:16px">
+    <div class="card">
+      <h2>Результат</h2>
+      <div class="grid" style="gap:14px;margin-top:10px">
+        <div class="qcard">
+          <p class="small">Правильних</p>
+          <div style="font-size:44px;font-weight:1000" id="score">0</div>
+          <p class="small">із 60</p>
+        </div>
+        <div class="qcard">
+          <p class="small">Відсоток</p>
+          <div style="font-size:44px;font-weight:1000" id="percent">0%</div>
+          <p class="small" id="gradeHint">—</p>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button id="restartBtn">Пройти ще раз</button>
+        <button class="secondary" id="backToStartBtn">На старт</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  // ВАЖЛИВО: тут НЕМАЄ перемішування ні питань, ні варіантів відповіді.
+  // Порядок завжди однаковий у всіх студентів.
+
+  const bank = [
+    {q:"1) Що таке PHP у веб-розробці?",o:["Мова стилів","Мова сценаріїв на стороні сервера","Браузерний рушій","СУБД"],a:1},
+    {q:"2) Яка команда запускає вбудований сервер PHP?",o:["php run","php -S localhost:8000","php start","php server"],a:1},
+    {q:"3) Яка функція показує конфігурацію PHP?",o:["info()","config()","phpinfo()","aboutphp()"],a:2},
+    {q:"4) З якого символу починається змінна в PHP?",o:["@","$","#","%"],a:1},
+    {q:"5) Оператор конкатенації рядків у PHP:",o:["&","+","::","."],a:3},
+
+    {q:"6) Що таке СУБД?",o:["Формат файлу","Мова програмування","Система керування БД","Тип браузера"],a:2},
+    {q:"7) Реляційна БД зберігає дані у вигляді:",o:["Таблиць","Графів","Файлів","DOM-дерева"],a:0},
+    {q:"8) PRIMARY KEY потрібен для:",o:["Унікальної ідентифікації запису","Сортування","Шифрування","Зміни кодування"],a:0},
+    {q:"9) AUTO_INCREMENT означає:",o:["Автоматичне збільшення значення поля","Авто-видалення рядків","Авто-шифрування","Авто-JOIN"],a:0},
+    {q:"10) Яка СУБД є форком MySQL?",o:["PostgreSQL","MariaDB","MongoDB","SQLite"],a:1},
+
+    {q:"11) SQL-команда для читання даних:",o:["UPDATE","SELECT","INSERT","DELETE"],a:1},
+    {q:"12) SQL-команда для вставки запису:",o:["INSERT","SELECT","CREATE","ALTER"],a:0},
+    {q:"13) SQL-команда для оновлення:",o:["CHANGE","UPDATE","MODIFY","SET"],a:1},
+    {q:"14) SQL-команда для видалення записів:",o:["DROP","DELETE","REMOVE","ERASE"],a:1},
+    {q:"15) COUNT() у SQL — це:",o:["Підрахунок рядків","Сума значень","Сортування","Кодування"],a:0},
+
+    {q:"16) Розширення PHP для роботи з MySQL:",o:["mysqli","curl","zip","gd"],a:0},
+    {q:"17) Файл основних налаштувань PHP:",o:["php.ini","config.php","settings.json","env.php"],a:0},
+    {q:"18) Найкращий захист від SQL-інʼєкцій:",o:["eval()","Prepared statements","Конкатенація рядків","Пароль у URL"],a:1},
+    {q:"19) MVC — це:",o:["Архітектурний шаблон","СУБД","Мова стилів","Протокол"],a:0},
+    {q:"20) Model у MVC відповідає за:",o:["Дані/роботу з БД","CSS","HTML-шаблони","Лише маршрути"],a:0},
+  ];
+
+  // Добивка до 60 без перемішування: просто повторюємо блоки (краще потім замінити на унікальні 60)
+  while(bank.length < 60){
+    const k = bank.length + 1;
+    const base = bank[(bank.length) % 20];
+    bank.push({q:`${k}) ${base.q.replace(/^\d+\)\s*/,"")}`, o:[...base.o], a:base.a});
+  }
+
+  const $ = s => document.querySelector(s);
+  const startSec = $("#start"), quizSec = $("#quiz"), resSec = $("#result");
+  const timerEl = $("#timer"), answeredEl = $("#answered"), correctNowEl = $("#correctNow"), kpiCorrectEl = $("#kpiCorrect");
+  const barEl = $("#bar"), questionsEl = $("#questions");
+  const startBtn = $("#startBtn"), finishBtn = $("#finishBtn"), toTopBtn = $("#toTopBtn");
+  const scoreEl = $("#score"), percentEl = $("#percent"), gradeHintEl = $("#gradeHint");
+  const restartBtn = $("#restartBtn"), backToStartBtn = $("#backToStartBtn");
+  const unansweredPanel = $("#unansweredPanel"), chipsEl = $("#chips");
+
+  let state = {
+    secondsLeft: 40*60, timerId:null,
+    chosen:new Array(60).fill(null),
+    isCorrect:new Array(60).fill(null),
+    started:false, finished:false
+  };
+
+  function fmt(sec){
+    const m=Math.floor(sec/60), s=sec%60;
+    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  }
+
+  function unansweredIndexes(){
+    const miss=[];
+    for(let i=0;i<60;i++) if(state.chosen[i]===null) miss.push(i);
+    return miss;
+  }
+
+  function jumpToQuestion(pos){
+    const el = document.getElementById(`qwrap_${pos}`);
+    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+
+  function renderUnansweredPanel(){
+    const miss = unansweredIndexes();
+    if(miss.length===0){
+      unansweredPanel.classList.add("hide");
+      chipsEl.innerHTML="";
+      return;
+    }
+    unansweredPanel.classList.remove("hide");
+    chipsEl.innerHTML="";
+    miss.forEach(pos=>{
+      const chip=document.createElement("div");
+      chip.className="chip";
+      chip.textContent=String(pos+1);
+      chip.addEventListener("click",()=>jumpToQuestion(pos));
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  function markMissedCards(){
+    for(let pos=0;pos<60;pos++){
+      const el=document.getElementById(`qwrap_${pos}`);
+      if(!el) continue;
+      if(state.chosen[pos]===null) el.classList.add("missed");
+      else el.classList.remove("missed");
+    }
+  }
+
+  function updateStats(){
+    const answered = state.chosen.filter(v=>v!==null).length;
+    const correct = state.isCorrect.filter(v=>v===true).length;
+    answeredEl.textContent = `${answered}/60`;
+    correctNowEl.textContent = `${correct}`;
+    kpiCorrectEl.textContent = `${correct}`;
+    barEl.style.width = `${Math.round((answered/60)*100)}%`;
+    finishBtn.disabled = !(answered===60) || state.finished;
+    renderUnansweredPanel();
+    markMissedCards();
+  }
+
+  function startTimer(){
+    timerEl.textContent = fmt(state.secondsLeft);
+    timerEl.classList.remove("danger");
+    state.timerId = setInterval(()=>{
+      state.secondsLeft--;
+      if(state.secondsLeft<0) state.secondsLeft=0;
+      timerEl.textContent = fmt(state.secondsLeft);
+      if(state.secondsLeft<=60) timerEl.classList.add("danger");
+      if(state.secondsLeft===0) finish(true);
+    },1000);
+  }
+
+  function stopTimer(){ if(state.timerId) clearInterval(state.timerId); state.timerId=null; }
+
+  function render(){
+    questionsEl.innerHTML="";
+    for(let pos=0; pos<60; pos++){
+      const item = bank[pos];
+
+      const wrap=document.createElement("div");
+      wrap.className="card qcard qwrap";
+      wrap.id=`qwrap_${pos}`;
+
+      const head=document.createElement("div");
+      head.className="qhead";
+
+      const num=document.createElement("div");
+      num.className="qnum";
+      num.textContent=String(pos+1);
+
+      const body=document.createElement("div");
+      body.style.flex="1";
+
+      const title=document.createElement("p");
+      title.className="qtitle";
+      title.textContent=item.q;
+
+      const opts=document.createElement("div");
+      opts.className="opts";
+
+      const fb=document.createElement("div");
+      fb.className="feedback";
+      fb.id=`fb_${pos}`;
+      fb.innerHTML=`<span class="small">Обери відповідь</span><span class="small">—</span>`;
+
+      item.o.forEach((optText, oi)=>{
+        const lab=document.createElement("label");
+        lab.className="opt";
+
+        const r=document.createElement("input");
+        r.type="radio";
+        r.name=`q_${pos}`;
+        r.value=oi;
+
+    r.addEventListener("change",()=>{
+  // якщо вже є відповідь — нічого не робимо
+  if (state.chosen[pos] !== null) return;
+
+  state.chosen[pos]=oi;
+
+  // Блокуємо всі варіанти в цьому питанні (щоб не можна було змінювати)
+  document.querySelectorAll(`input[name="q_${pos}"]`).forEach(inp => {
+    inp.disabled = true;
+  });
+
+  const ok = (oi===item.a);
+  state.isCorrect[pos]=ok;
+
+  const box=document.getElementById(`fb_${pos}`);
+  box.innerHTML = `
+    <span class="${ok ? "ok" : "bad"}">${ok ? "✔ Правильно" : "✖ Неправильно"}</span>
+    <span class="small">Зафіксовано. Твоя: <b>${String.fromCharCode(65+oi)}</b> • Правильна: <b>${String.fromCharCode(65+item.a)}</b></span>
+  `;
+
+  updateStats();
+    });
+
+
+        const span=document.createElement("span");
+        span.textContent = `${String.fromCharCode(65+oi)}) ${optText}`;
+
+        lab.appendChild(r);
+        lab.appendChild(span);
+        opts.appendChild(lab);
+      });
+
+      body.appendChild(title);
+      body.appendChild(opts);
+      body.appendChild(fb);
+
+      head.appendChild(num);
+      head.appendChild(body);
+      wrap.appendChild(head);
+      questionsEl.appendChild(wrap);
+    }
+    updateStats();
+  }
+
+  function grade(score){
+    const p=(score/60)*100;
+    if(p>=90) return "Відмінно (≥90%)";
+    if(p>=75) return "Добре (75–89%)";
+    if(p>=60) return "Задовільно (60–74%)";
+    return "Потрібно повторити матеріал (<60%)";
+  }
+
+  function finish(auto=false){
+    if(state.finished) return;
+
+    const miss = unansweredIndexes();
+    if(!auto && miss.length>0){
+      updateStats();
+      alert("Є питання без відповіді. Перейду до першого пропущеного.");
+      jumpToQuestion(miss[0]);
+      return;
+    }
+
+    state.finished=true;
+    stopTimer();
+
+    const correct = state.isCorrect.filter(v=>v===true).length;
+    const pct=Math.round((correct/60)*100);
+
+    scoreEl.textContent=correct;
+    percentEl.textContent=`${pct}%`;
+    gradeHintEl.textContent=grade(correct);
+
+    quizSec.classList.add("hide");
+    resSec.classList.remove("hide");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function reset(){
+    stopTimer();
+    state.secondsLeft=40*60;
+    state.chosen=new Array(60).fill(null);
+    state.isCorrect=new Array(60).fill(null);
+    state.finished=false;
+    timerEl.textContent="40:00";
+    timerEl.classList.remove("danger");
+  }
+
+  startBtn.addEventListener("click",()=>{
+    state.started=true;
+    startSec.classList.add("hide");
+    quizSec.classList.remove("hide");
+    render();
+    startTimer();
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  finishBtn.addEventListener("click",()=>finish(false));
+  toTopBtn.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+
+  restartBtn.addEventListener("click",()=>{
+    reset();
+    resSec.classList.add("hide");
+    quizSec.classList.remove("hide");
+    render();
+    startTimer();
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  backToStartBtn.addEventListener("click",()=>{
+    reset();
+    state.started=false;
+    resSec.classList.add("hide");
+    quizSec.classList.add("hide");
+    startSec.classList.remove("hide");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  updateStats();
+})();
+</script>
+</body>
+</html>
